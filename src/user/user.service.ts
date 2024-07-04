@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
+import { hash } from 'argon2'
 import { PrismaService } from 'src/prisma.service'
+import { CreateUserDto, UpdateUserDto } from 'src/user/dto/create-user.dto'
 
 @Injectable()
 export class UserService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
   async findById(id: number) {
-    const user = await this.prismaService.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
     })
 
@@ -16,7 +18,7 @@ export class UserService {
   }
 
   async findByEmail(email: string) {
-    const resultEmail = await this.prismaService.user.findUnique({
+    const resultEmail = await this.prisma.user.findUnique({
       where: { email },
     })
 
@@ -24,5 +26,30 @@ export class UserService {
       throw new NotFoundException('Пользователь с таким email не найден')
 
     return resultEmail
+  }
+
+  async create({ password, ...dto }: CreateUserDto) {
+    const user = {
+      ...dto,
+      password: await hash(password),
+    }
+
+    return this.prisma.user.create({
+      data: user,
+    })
+  }
+
+  async update(id: number, { password, ...data }: UpdateUserDto) {
+    await this.findById(id)
+
+    const hashedPassword = password ? { password: await hash(password) } : {}
+
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        ...data,
+        ...hashedPassword,
+      },
+    })
   }
 }
