@@ -1,10 +1,19 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { UserModule } from './user/user.module';
-import { SettingsModule } from './settings/settings.module';
-import { StatisticsModule } from './statistics/statistics.module';
+import { EmailModule } from './email/email.module'
+import { MediaModule } from './media/media.module'
+import { SettingsModule } from './settings/settings.module'
+import { StatisticsModule } from './statistics/statistics.module'
+import { UserModule } from './user/user.module'
 
 @Module({
-  imports: [ConfigModule.forRoot(), UserModule, SettingsModule, StatisticsModule],
+  imports: [
+    ConfigModule.forRoot(),
+    UserModule,
+    SettingsModule,
+    StatisticsModule,
+    EmailModule,
+    MediaModule,
+  ],
 })
 export class AppModule {}
