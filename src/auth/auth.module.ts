@@ -5,7 +5,6 @@ import { AuthController } from 'src/auth/auth.controller'
 import { AuthService } from 'src/auth/auth.service'
 import { JwtStrategy } from 'src/auth/jwt.strategy'
 import { getJwtConfig } from 'src/config/jwt.config'
-import { EmailService } from 'src/email/email.service'
 import { PrismaService } from 'src/prisma.service'
 import { UserService } from 'src/user/user.service'
 
@@ -16,7 +15,7 @@ import { UserService } from 'src/user/user.service'
     PrismaService,
     UserService,
     JwtStrategy,
-    EmailService,
+    /* EmailService, */
   ],
   imports: [
     ConfigModule,

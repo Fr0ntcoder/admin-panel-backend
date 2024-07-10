@@ -7,7 +7,7 @@ import {
   UseInterceptors,
   UsePipes,
 } from '@nestjs/common'
-import { FileInterceptor } from '@nestjs/platform-express'
+import { FilesInterceptor } from '@nestjs/platform-express'
 import { IFile } from 'src/media/media.interface'
 import { FileValidationPipe } from 'src/media/pipes/file.validation.pipe'
 import { FolderValidationPipe } from 'src/media/pipes/folder.validation.pipe'
@@ -19,7 +19,7 @@ export class MediaController {
 
   @HttpCode(200)
   @Post()
-  @UseInterceptors(FileInterceptor('media'))
+  @UseInterceptors(FilesInterceptor('media'))
   @UsePipes(new FolderValidationPipe())
   async uploadMediaFile(
     @UploadedFiles(FileValidationPipe) mediaFiles: IFile | IFile[],

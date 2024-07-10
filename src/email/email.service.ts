@@ -1,7 +1,4 @@
-import { MailerService } from '@nestjs-modules/mailer'
-import { Injectable } from '@nestjs/common'
-
-@Injectable()
+/* @Injectable()
 export class EmailService {
   constructor(private readonly mailerService: MailerService) {}
 
@@ -14,6 +11,7 @@ export class EmailService {
   }
 
   sendWelcome(to: string) {
-    return this.sendEmail(to, 'Спасибо за регистрацию!', '<p>Спасибо!/p>')
+    return this.sendEmail(to, 'Спасибо за регистрацию!', '<p>Спасибо!</p>')
   }
 }
+ */

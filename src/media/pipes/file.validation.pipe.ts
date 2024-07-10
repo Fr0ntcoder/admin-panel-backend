@@ -9,8 +9,8 @@ const allowedMimeTypes = [
   'image/svg+xml',
 ]
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5мб для всех файлов
-const MAX_ZIP_FILE_SIZE = 100 * 1024 * 1024 // 100мб для zip файлов
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 МБ для всех файлов кроме zip
+const MAX_ZIP_FILE_SIZE = 100 * 1024 * 1024 // 100 МБ для zip файлов
 
 @Injectable()
 export class FileValidationPipe implements PipeTransform {
@@ -23,14 +23,14 @@ export class FileValidationPipe implements PipeTransform {
       }
 
       if (!allowedMimeTypes.includes(file.mimetype)) {
-        throw new BadRequestException('Unsupported file type')
+        throw new BadRequestException(`Unsupported file type`)
       }
 
       const maxSize =
-        file.memetype === 'application/zip' ? MAX_ZIP_FILE_SIZE : MAX_FILE_SIZE
+        file.mimetype === 'application/zip' ? MAX_ZIP_FILE_SIZE : MAX_FILE_SIZE
 
       if (file.size > maxSize) {
-        throw new BadRequestException('File size is too big')
+        throw new BadRequestException(`File size is too big`)
       }
     }
 

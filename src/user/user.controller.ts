@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common'
 import { Auth } from 'src/auth/decorators/auth.decorator'
 import { PaginationArgsWithSearchTerm } from 'src/base/pagination/pagination.args'
 import { CreateUserDto, UpdateUserDto } from 'src/user/dto/create-user.dto'
@@ -33,7 +42,7 @@ export class UserController {
   }
 
   @Auth('ADMIN')
-  @Put(':id')
+  @Delete(':id')
   async deleteUser(@Param('id') id: string) {
     return this.userService.delete(id)
   }

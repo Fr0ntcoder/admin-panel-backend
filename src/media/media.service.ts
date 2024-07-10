@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { path } from 'app-root-path'
 import { ensureDir, writeFile } from 'fs-extra'
+import { cleanFileName } from 'src/media/clean-name'
 import { IFile, IMediaResponse } from 'src/media/media.interface'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -11,13 +12,15 @@ export class MediaService {
     folder = 'default',
   ): Promise<IMediaResponse[]> {
     const folderLowerCase = folder.toLowerCase()
+
     const uploadFolder = `${path}/uploads/${folderLowerCase}`
     await ensureDir(uploadFolder)
 
     const responses: IMediaResponse[] = []
 
     for (const file of Array.isArray(mediaFiles) ? mediaFiles : [mediaFiles]) {
-      const fileName = file?.originalname || file?.name
+      let fileName = file?.originalname || file?.name
+      fileName = cleanFileName(fileName)
 
       const uniqueSuffix = uuidv4().split('-')[0]
       const uniqueFileName = `${uniqueSuffix}-${fileName}`

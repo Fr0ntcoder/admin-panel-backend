@@ -6,7 +6,7 @@ import { PrismaService } from 'src/prisma.service'
 export class SettingsService {
   constructor(private prisma: PrismaService) {}
 
-  async getSettingsByKey(key: string): Promise<Setting | null> {
+  async getSettingByKey(key: string): Promise<Setting | null> {
     return this.prisma.setting.findUnique({
       where: { key },
     })

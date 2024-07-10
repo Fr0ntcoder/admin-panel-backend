@@ -14,12 +14,12 @@ export class StatisticsController {
 
   @Auth('ADMIN')
   @Get('/numbers')
-  getNumber() {
+  getNumbers() {
     return this.statisticsService.getNumbers()
   }
 
   @Auth('ADMIN')
-  @Get('/country-by-country')
+  @Get('/count-by-country')
   getCountByCountry() {
     return this.statisticsService.getUserCountByCountry()
   }

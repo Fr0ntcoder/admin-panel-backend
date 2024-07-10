@@ -6,6 +6,62 @@ import { PrismaService } from 'src/prisma.service'
 export class StatisticsService {
   constructor(private prisma: PrismaService) {}
 
+  async getUserRegistrationsByMonth() {
+    const currentMonth = new Date().getMonth() // Текущий месяц (от 0 до 11)
+    const currentYear = new Date().getFullYear() // Текущий год
+
+    // Начало отчетного периода: июль прошлого года
+    const startDate = new Date(currentYear - 1, currentMonth + 1, 1)
+
+    // Конец отчетного периода: последний день текущего месяца
+    const endDate = new Date(currentYear, currentMonth + 1, 0)
+
+    // Генерация всех месяцев между startDate и endDate
+    const allMonths = this.generateMonths(startDate, endDate)
+
+    // Группировка пользователей по месяцу создания (createdAt)
+    const registrations = await this.prisma.user.groupBy({
+      by: ['createdAt'],
+      _count: true,
+      orderBy: {
+        createdAt: 'asc', // Сортировка по дате создания в порядке возрастания
+      },
+      where: {
+        createdAt: {
+          gte: startDate, // От начала отчетного периода
+          lte: endDate, // До конца отчетного периода
+        },
+      },
+    })
+
+    const registrationMap = new Map<string, number>() // Map для хранения количества регистраций по месяцам
+
+    for (const reg of registrations) {
+      const month = reg.createdAt.getMonth() + 1 // Получаем месяц создания (от 1 до 12)
+      const year = reg.createdAt.getFullYear() // Получаем год создания
+      const key = `${year}-${month}` // Создаем ключ в формате "год-месяц"
+
+      if (registrationMap.has(key)) {
+        // Если ключ уже существует, увеличиваем значение на количество регистраций
+        registrationMap.set(key, registrationMap.get(key) + reg._count)
+      } else {
+        // Если ключ не существует, добавляем новую запись
+        registrationMap.set(key, reg._count)
+      }
+    }
+
+    // Преобразование списка месяцев в формат с названиями месяцев и подсчетом регистраций
+    return allMonths.map(({ month, year }) => {
+      const key = `${year}-${month}` // Ключ в формате "год-месяц"
+      const monthName = dayjs(new Date(year, month - 1)).format('MMMM') // Преобразование числа месяца в название
+      return {
+        month: monthName, // Название месяца
+        year,
+        count: registrationMap.get(key) || 0, // Количество регистраций или 0, если нет регистраций
+      }
+    })
+  }
+
   private generateMonths(
     start: Date,
     end: Date,
@@ -16,100 +72,23 @@ export class StatisticsService {
 
     while (current < endMonth) {
       months.push({
-        month: current.getMonth() + 1, // Добавляем месяц(от 1 до 12)
+        month: current.getMonth() + 1, // Добавляем месяц (от 1 до 12)
         year: current.getFullYear(), // Добавляем год
-      }),
-        current.setMonth(current.getMonth() + 1) // Переходим к следующему месяцу
+      })
+      current.setMonth(current.getMonth() + 1) // Переходим к следующему месяцу
     }
 
     // Добавление последнего месяца
     months.push({
-      month: endMonth.getMonth() + 1, //  Месяц (от 1 до 12)
+      month: endMonth.getMonth() + 1, // Месяц (от 1 до 12)
       year: endMonth.getFullYear(), // Год
     })
 
-    return months
-  }
-  async getUserRegistrationsByMonth() {
-    const currentMonth = new Date().getMonth() // Текущий месяц( от 0 до 11)
-    const currentYear = new Date().getFullYear() // Текущий год
-
-    // Начало отчетного периода: июль прошлого года
-    const startDate = new Date(currentYear - 1, currentMonth + 1, 1)
-
-    // Конец отчетного периода: последний день текущего месяца
-    const endDate = new Date(currentYear, currentMonth + 1)
-
-    // Генерация всех месяцев между startDate и endDate
-    const allMonths = this.generateMonths(startDate, endDate)
-
-    // Группировка пользователей по месяцу создания(createdAt)
-    const registrations = await this.prisma.user.groupBy({
-      by: ['createdAt'],
-      _count: true,
-      orderBy: {
-        createdAt: 'asc',
-      },
-      where: {
-        createdAt: {
-          gte: startDate, // От начала отчетного периода
-          lte: endDate, // До конца отчетного периода
-        },
-      },
-    })
-
-    const registrationMap = new Map<string, number>()
-
-    for (const reg of registrations) {
-      const month = reg.createdAt.getMonth() + 1 // Получаем месяц создания (от 1 до 12)
-      const year = reg.createdAt.getFullYear() // Получем год создания
-      const key = `${year} - ${month}`
-
-      if (registrationMap.has(key)) {
-        registrationMap.set(key, registrationMap.get(key) + reg._count)
-      } else {
-        registrationMap.set(key, reg._count)
-      }
-    }
-
-    // Преобразование списка месяцев в формат с названием месяцев и подсчетом регистраций
-    return allMonths.map(({ month, year }) => {
-      const key = `${year} - ${month}`
-      const monthName = dayjs(new Date(year, month - 1)).format('MMMM')
-
-      return {
-        month: monthName,
-        year,
-        count: registrationMap.get(key) || 0, // Количество регистраций,или 0,если нет регистраций
-      }
-    })
-  }
-  async getUserCountByCountry() {
-    const result = await this.prisma.user.groupBy({
-      by: ['country'],
-      _count: {
-        country: true,
-      },
-      where: {
-        country: {
-          not: null,
-        },
-      },
-      orderBy: {
-        _count: {
-          country: 'desc',
-        },
-      },
-    })
-
-    return result.map((item) => ({
-      country: item.country,
-      count: item._count.country,
-    }))
+    return months // Возвращаем массив месяцев
   }
 
   async getNumbers() {
-    const userCount = await this.prisma.user.count()
+    const usersCount = await this.prisma.user.count()
 
     const activeUsersCount = await this.prisma.user.count({
       where: {
@@ -142,7 +121,7 @@ export class StatisticsService {
     return [
       {
         name: 'Users',
-        value: userCount,
+        value: usersCount,
       },
       {
         name: 'Active Users',
@@ -157,5 +136,29 @@ export class StatisticsService {
         value: uniqueCountriesCount.length,
       },
     ]
+  }
+
+  async getUserCountByCountry() {
+    const result = await this.prisma.user.groupBy({
+      by: ['country'],
+      _count: {
+        country: true,
+      },
+      where: {
+        country: {
+          not: null,
+        },
+      },
+      orderBy: {
+        _count: {
+          country: 'desc',
+        },
+      },
+    })
+
+    return result.map((item) => ({
+      country: item.country,
+      count: item._count.country,
+    }))
   }
 }

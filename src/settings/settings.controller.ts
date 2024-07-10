@@ -9,7 +9,7 @@ export class SettingsController {
   @Auth('ADMIN')
   @Get(':key')
   getSetting(@Param('key') key: string) {
-    return this.settingsService.getSettingsByKey(key)
+    return this.settingsService.getSettingByKey(key)
   }
 
   @Auth('ADMIN')

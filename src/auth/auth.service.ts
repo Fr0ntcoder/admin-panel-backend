@@ -8,7 +8,6 @@ import { Role } from '@prisma/client'
 import { verify } from 'argon2'
 import { Response } from 'express'
 import { AuthDto } from 'src/auth/dto/auth.dto'
-import { EmailService } from 'src/email/email.service'
 import { PrismaService } from 'src/prisma.service'
 import { UserService } from 'src/user/user.service'
 
@@ -19,46 +18,52 @@ export class AuthService {
 
   constructor(
     private prisma: PrismaService,
-    private userService: UserService,
     private jwt: JwtService,
-    private emailService: EmailService,
+    private userService: UserService,
   ) {}
 
   async login(dto: AuthDto) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...user } = await this.validateUser(dto)
-
     const tokens = await this.issueTokens(user.id, user.role)
 
-    return { user, ...tokens }
+    return {
+      user,
+      ...tokens,
+    }
   }
 
   async register(dto: AuthDto) {
     const oldUser = await this.userService.findByEmail(dto.email)
 
-    if (oldUser) {
-      throw new BadRequestException('Этот пользователь уже существует')
-    }
+    if (oldUser) throw new BadRequestException('User already exists')
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...user } = await this.userService.create(dto)
 
     const tokens = await this.issueTokens(user.id, user.role)
 
-    await this.emailService.sendWelcome(user.email)
+    /*   await this.emailService.sendWelcome(user.email) */
 
-    return { user, ...tokens }
+    return {
+      user,
+      ...tokens,
+    }
   }
 
   async getNewTokens(refreshToken: string) {
     const result = await this.jwt.verifyAsync(refreshToken)
-    if (!result) {
-      throw new UnauthorizedException('Invalid refresh token')
-    }
+    if (!result) throw new UnauthorizedException('Invalid refresh token')
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...user } = await this.userService.findById(result.id)
 
     const tokens = await this.issueTokens(user.id, user.role)
 
-    return { user, ...tokens }
+    return {
+      user,
+      ...tokens,
+    }
   }
 
   private async issueTokens(userId: number, role?: Role) {
@@ -78,27 +83,23 @@ export class AuthService {
   private async validateUser(dto: AuthDto) {
     const user = await this.userService.findByEmail(dto.email)
 
-    if (!user) {
-      throw new UnauthorizedException('Неверный пароль')
-    }
+    if (!user) throw new UnauthorizedException('Email or password invalid')
 
     const isValid = await verify(user.password, dto.password)
 
-    if (isValid) {
-      throw new UnauthorizedException('Неверный email')
-    }
+    if (!isValid) throw new UnauthorizedException('Email or password invalid')
 
     return user
   }
 
   addRefreshTokenToResponse(res: Response, refreshToken: string) {
-    const expireIn = new Date()
-    expireIn.setDate(expireIn.getDate() + this.EXPIRE_DAY_REFRESH_TOKEN)
+    const expiresIn = new Date()
+    expiresIn.setDate(expiresIn.getDate() + this.EXPIRE_DAY_REFRESH_TOKEN)
 
     res.cookie(this.REFRESH_TOKEN_NAME, refreshToken, {
       httpOnly: true,
       domain: 'localhost',
-      expires: expireIn,
+      expires: expiresIn,
       // true if production
       secure: true,
       // lax if production
@@ -106,8 +107,8 @@ export class AuthService {
     })
   }
 
-  removeRefreshTokenToResponse(res: Response) {
-    res.cookie(this.REFRESH_TOKEN_NAME, {
+  removeRefreshTokenFromResponse(res: Response) {
+    res.cookie(this.REFRESH_TOKEN_NAME, '', {
       httpOnly: true,
       domain: 'localhost',
       expires: new Date(0),
